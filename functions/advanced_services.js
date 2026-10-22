@@ -41,12 +41,15 @@ exports.requestCertificate=onCall({secrets:[signingKey]},async r=>{
  page.drawText('Verify via the LMS; this is not an Embassy-accredited qualification.',{x:125,y:120,size:11,font:normal,color:rgb(1,1,1)});
  return {certificateId,pdfBase64:Buffer.from(await pdf.save()).toString('base64'),verificationPath:'/verify/'+certificateId};
 });
-exports.verifyCertificate=onCall(async r=>{
+exports.verifyCertificate=onCall({secrets:[signingKey]},async r=>{
  const certId=r.data?.certificateId;
  if(!id(certId))throw new HttpsError('invalid-argument','Invalid certificate');
  const doc=await db.doc('certificates/'+certId).get();
  if(!doc.exists||doc.data().revoked)return {valid:false};
  const d=doc.data();
+ const signedPayload={certificateId:d.certificateId,uid:d.uid,courseId:d.courseId,courseTitle:d.courseTitle,issuedAt:d.issuedAt,schema:d.schema};
+ const expected=crypto.createHmac('sha256',signingKey.value()).update(JSON.stringify(signedPayload)).digest('hex');
+ if(typeof d.proof!=='string'||!(/^[a-f0-9]{64}$/.test(d.proof))||!crypto.timingSafeEqual(Buffer.from(expected,'hex'),Buffer.from(d.proof,'hex')))return {valid:false};
  // Public lookup intentionally returns minimal data: never expose learner UID.
  return {valid:true,certificateId:certId,courseTitle:d.courseTitle,issuedAt:d.issuedAt};
 });
