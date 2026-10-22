@@ -14,14 +14,17 @@ exports.classroomJoinToken=onCall({secrets:[key,secret]},async request=>{
  if(!/^[a-zA-Z0-9_-]{1,100}$/.test(sessionId))throw new HttpsError('invalid-argument','Invalid session');
  const snap=await db.doc('sessions/'+sessionId).get();
  if(!snap.exists||!snap.data().published)throw new HttpsError('not-found','Classroom unavailable');
+ const time=Date.parse(snap.data().scheduledAt);
+ if(!Number.isFinite(time)||Date.now()<time-30*60*1000||Date.now()>time+6*60*60*1000)throw new HttpsError('failed-precondition','Classroom is outside its authorized time window');
  const session=snap.data();
  if(!session.courseId)throw new HttpsError('failed-precondition','Session is not bound to a course');
  const enrollment=await db.doc('users/'+uid+'/enrollments/'+session.courseId).get();
  const staff=['admin','instructor'].includes(request.auth.token.role);
  if(!enrollment.exists&&!staff)throw new HttpsError('permission-denied','Enroll in the free course before joining');
+ if(request.auth.token.role==='instructor' && session.createdBy!==uid && !enrollment.exists)throw new HttpsError('permission-denied','Only the session instructor may join without enrollment');
  if(!publicUrl.value().startsWith('wss://'))throw new HttpsError('failed-precondition','Classroom server not configured');
  const room='acm_'+sessionId;
  const token=new AccessToken(key.value(),secret.value(),{identity:uid,ttl:'20m',name:request.auth.token.name||'Learner'});
- token.addGrant({roomJoin:true,room,canPublish:true,canSubscribe:true,canPublishData:true,roomAdmin:staff});
+ token.addGrant({roomJoin:true,room,canPublish:true,canSubscribe:true,canPublishData:true,roomAdmin:request.auth.token.role==='admin'});
  return {url:publicUrl.value(),token:await token.toJwt(),room};
 });
