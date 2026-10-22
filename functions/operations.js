@@ -1,5 +1,6 @@
 const {onCall,HttpsError}=require('firebase-functions/v2/https');
 const admin=require('firebase-admin');const crypto=require('node:crypto');
+const {requireCurrentRole}=require('./authorization');
 if(!admin.apps.length)admin.initializeApp();const db=admin.firestore();
 const auth=r=>{if(!r.auth)throw new HttpsError('unauthenticated','Sign in');return r.auth.uid;};
 const staff=r=>{auth(r);if(!['admin','instructor'].includes(r.auth.token.role))throw new HttpsError('permission-denied','Staff only');};
@@ -63,7 +64,7 @@ exports.bookMakerspace=onCall(async r=>{
  });
 });
 exports.setInstitutionalRole=onCall(async r=>{
- adminOnly(r);
+ await requireCurrentRole(r,['admin'],{requireRecentLogin:true});
  const uid=String(r.data?.uid||''),role=String(r.data?.role||'');
  if(!valid(uid)||!['learner','instructor','admin'].includes(role)||uid===r.auth.uid)throw new HttpsError('invalid-argument','Invalid role change');
  const user=await admin.auth().getUser(uid);
@@ -73,7 +74,7 @@ exports.setInstitutionalRole=onCall(async r=>{
  return {uid,role,requiresTokenRefresh:true};
 });
 exports.updateModeration=onCall(async r=>{
- staff(r);const {itemId,action}=r.data||{};
+ await requireCurrentRole(r,['admin','instructor']);const {itemId,action}=r.data||{};
  if(!valid(itemId)||!['approve','reject','hide'].includes(action))throw new HttpsError('invalid-argument','Invalid moderation action');
  const ref=db.doc('moderationQueue/'+itemId),snap=await ref.get();
  if(!snap.exists)throw new HttpsError('not-found','Item missing');
@@ -82,9 +83,9 @@ exports.updateModeration=onCall(async r=>{
  return {status:action};
 });
 exports.getCourseAnalytics=onCall(async r=>{
- staff(r);const cid=r.data?.courseId;if(!valid(cid))throw new HttpsError('invalid-argument','Course ID required');
+ const {role}=await requireCurrentRole(r,['admin','instructor']);const cid=r.data?.courseId;if(!valid(cid))throw new HttpsError('invalid-argument','Course ID required');
  const course=await db.doc('courses/'+cid).get();if(!course.exists)throw new HttpsError('not-found','Unknown course');
- if(r.auth.token.role!=='admin'&&course.data().createdBy!==r.auth.uid)throw new HttpsError('permission-denied','Course ownership required');
+ if(role!=='admin'&&course.data().createdBy!==r.auth.uid)throw new HttpsError('permission-denied','Course ownership required');
  const enrolled=await db.collectionGroup('enrollments').where('courseId','==',cid).count().get();
  return {courseId:cid,enrollments:enrolled.data().count,note:'Aggregated enrollment count; requires Firestore collection group index'};
 });
