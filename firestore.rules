@@ -35,6 +35,13 @@ service cloud.firestore {
      allow read: if collection in ['quests','practice','labs','portfolios','communities','careers','resources','challenges','equipment','experiences','opportunities','sessions'] && (resource.data.published == true || staff());
      allow write: if false;
    }
+   match /labJobs/{id} { allow read, write: if false; }
+   match /auditEvents/{id} { allow read, write: if false; }
+   match /moderationQueue/{id} { allow read, write: if false; }
+   match /equipment/{equipmentId}/slots/{slotId} {allow read: if signedIn(); allow write: if false;}
+   match /users/{uid}/syncOperations/{id} {allow read,write: if false;}
+   match /users/{uid}/lessonReads/{id} {allow read: if signedIn() && (request.auth.uid == uid || admin());allow write: if false;}
+   match /users/{uid}/bookings/{id} {allow read: if signedIn() && (request.auth.uid == uid || admin());allow write: if false;}
    match /certificates/{id} { allow read, write: if false; }
    match /aiUsage/{id} { allow read, write: if false; }
    match /{document=**} { allow read, write: if false; }
