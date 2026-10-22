@@ -65,3 +65,5 @@ Object.assign(exports,require('./classroom'));
 Object.assign(exports,require('./analytics'));
 
 Object.assign(exports,require('./completion'));
+
+Object.assign(exports,require('./admin_management'));
