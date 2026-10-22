@@ -3,6 +3,7 @@ import 'staff_console.dart';
 import 'offline_learning.dart';
 import 'advanced_studio.dart';
 import 'operations_console.dart';
+import 'learning_model_viewer.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -77,6 +78,7 @@ class HubCollectionScreen extends StatelessWidget {
           title:Text('${data['title']??'Activity'}'),
           content:SingleChildScrollView(child:SelectableText('${data['content']??data['description']??''}')),
           actions:[
+           if(collection=='experiences' && data['modelUrl'] is String) TextButton(onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>LearningModelViewer(modelUrl:data['modelUrl'] as String,title:'${data['title']??'3D lesson'}',description:'${data['description']??''}'))),child:const Text('Explore in 3D')),
            if(data['url'] is String) TextButton(onPressed:()=>openApprovedLearningLink(data['url'] as String),child:const Text('Open activity')),
            TextButton(onPressed:()=>Navigator.pop(dialogContext),child:const Text('Close')),
           ],
