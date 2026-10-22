@@ -1,5 +1,7 @@
 import 'learning_hub.dart';
 import 'package:flutter/material.dart';
+import 'offline_learning.dart';
+import 'offline_sync_queue.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -126,7 +128,7 @@ class CourseDetails extends StatelessWidget {
     const Text('Lessons', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
     StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(stream: FirebaseFirestore.instance.collection('courses').doc(courseId).collection('lessons').orderBy('position').snapshots(), builder: (context, s) {
       if (!s.hasData) return const LinearProgressIndicator();
-      return Column(children: s.data!.docs.map((d) => ListTile(title: Text('${d.data()['title'] ?? 'Lesson'}'), subtitle: Text('${d.data()['content'] ?? ''}', maxLines: 3), leading: const Icon(Icons.menu_book))).toList());
+      return Column(children: s.data!.docs.map((d) => ListTile(title: Text('${d.data()['title'] ?? 'Lesson'}'), subtitle: Text('${d.data()['content'] ?? ''}', maxLines: 3), leading: const Icon(Icons.menu_book), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LessonReader(courseId: courseId, lessonId: d.id, lesson: d.data()))))).toList());
     }),
   ]));
 }
@@ -165,4 +167,32 @@ class _TutorScreenState extends State<TutorScreen> {
     const SizedBox(height: 16),
     SelectableText(answer),
   ]));
+}
+
+class LessonReader extends StatefulWidget {
+ final String courseId,lessonId;
+ final Map<String,dynamic> lesson;
+ const LessonReader({super.key,required this.courseId,required this.lessonId,required this.lesson});
+ @override State<LessonReader> createState()=>_LessonReaderState();
+}
+class _LessonReaderState extends State<LessonReader> {
+ String message='';
+ Future<void> saveOffline()async{
+  await OfflineLessonStore().save(widget.courseId,widget.lessonId,widget.lesson);
+  if(mounted)setState(()=>message='Text lesson saved for offline reading on this device.');
+ }
+ Future<void> markRead()async{
+  if(FirebaseAuth.instance.currentUser==null){setState(()=>message='Sign in and enroll before recording reading progress.');return;}
+  final op='read_${widget.courseId}_${widget.lessonId}';
+  await OfflineSyncQueue().enqueue(operationId:op,courseId:widget.courseId,lessonId:widget.lessonId);
+  final done=await OfflineSyncQueue().flush();
+  if(mounted)setState(()=>message=done>0?'Progress synchronized.':'Reading event saved for retry after reconnection.');
+ }
+ @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:Text('${widget.lesson['title']??'Lesson'}')),body:ListView(padding:const EdgeInsets.all(20),children:[
+  SelectableText('${widget.lesson['content']??''}'),
+  const SizedBox(height:20),
+  FilledButton.icon(onPressed:saveOffline,icon:const Icon(Icons.download_for_offline),label:const Text('Save lesson text offline')),
+  OutlinedButton.icon(onPressed:markRead,icon:const Icon(Icons.check_circle),label:const Text('Mark as read and sync')),
+  Text(message),
+ ]));
 }
