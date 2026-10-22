@@ -61,3 +61,5 @@ Object.assign(exports,require('./advanced_services'));
 Object.assign(exports,require('./operations'));
 
 Object.assign(exports,require('./classroom'));
+
+Object.assign(exports,require('./analytics'));
