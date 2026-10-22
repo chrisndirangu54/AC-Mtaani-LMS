@@ -18,7 +18,6 @@ dependencies:
   flutter_svg: ^2.0.17
   printing: ^5.13.4
   model_viewer_plus: ^1.9.3
-  model_viewer_plus: ^1.9.3
 dev_dependencies:
   flutter_test:
     sdk: flutter
