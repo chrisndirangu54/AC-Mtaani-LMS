@@ -31,7 +31,7 @@ class _StaffConsoleState extends State<StaffConsole> {
  return ListView(padding:const EdgeInsets.all(18),children:[
   Text('Staff role: $role',style:Theme.of(context).textTheme.titleLarge),
   const SizedBox(height:12),
-  DropdownButtonFormField<String>(value:collection,decoration:const InputDecoration(labelText:'Module'),items:sections.map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),onChanged:(v)=>setState(()=>collection=v??collection)),
+  DropdownButtonFormField<String>(initialValue:collection,decoration:const InputDecoration(labelText:'Module'),items:sections.map((x)=>DropdownMenuItem(value:x,child:Text(x))).toList(),onChanged:(v)=>setState(()=>collection=v??collection)),
   TextField(controller:title,decoration:const InputDecoration(labelText:'Title')),
   TextField(controller:description,decoration:const InputDecoration(labelText:'Description'),maxLines:2),
   TextField(controller:body,decoration:const InputDecoration(labelText:'Approved educational content'),maxLines:5),
