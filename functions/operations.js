@@ -11,7 +11,15 @@ exports.requestLabRun=onCall(async r=>{
  if(!valid(labId)||typeof source!=='string'||source.length>16000||!['python','javascript','sql'].includes(language))throw new HttpsError('invalid-argument','Invalid lab request');
  const lab=await db.doc('labs/'+labId).get();
  if(!lab.exists||lab.data().published!==true)throw new HttpsError('not-found','Lab not published');
- const job=await db.collection('labJobs').add({uid,labId,language,source,status:'queued',createdAt:admin.firestore.FieldValue.serverTimestamp(),expiresAt:admin.firestore.Timestamp.fromMillis(Date.now()+3600000)});
+ const day=new Date().toISOString().slice(0,10);
+ const usage=db.doc('labUsage/'+uid+'_'+day);
+ const quota=await db.runTransaction(async tx=>{
+  const current=await tx.get(usage);const count=current.exists?Number(current.data().count||0):0;
+  if(count>=30)throw new HttpsError('resource-exhausted','Daily lab run quota reached');
+  tx.set(usage,{uid,day,count:count+1},{merge:true});
+  return count+1;
+ });
+ const job=await db.collection('labJobs').add({uid,labId,language,source,status:'queued',quotaOrdinal:quota,createdAt:admin.firestore.FieldValue.serverTimestamp(),expiresAt:admin.firestore.Timestamp.fromMillis(Date.now()+3600000)});
  // An external isolated worker must claim and execute jobs with trusted service credentials.
  // No source execution occurs inside Firebase Functions.
  return {jobId:job.id,status:'queued'};
