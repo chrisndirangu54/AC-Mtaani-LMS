@@ -50,17 +50,45 @@ class LearningHub extends StatelessWidget {
      ]))));})),
  ]));
 }
-class HubCollectionScreen extends StatelessWidget{
- final String title,collection;
+class HubCollectionScreen extends StatelessWidget {
+ final String title, collection;
  const HubCollectionScreen({super.key,required this.title,required this.collection});
- @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:Text(title)),body:StreamBuilder<QuerySnapshot<Map<String,dynamic>>>(
-  stream:FirebaseFirestore.instance.collection(collection).where('published',isEqualTo:true).limit(30).snapshots(),
-  builder:(context,s){if(s.hasError)return const Center(child:Text('Content temporarily unavailable.'));if(!s.hasData)return const Center(child:CircularProgressIndicator());
-   if(s.data!.docs.isEmpty)return const Center(child:Text('New free activities will appear here after instructor approval.'));
-   return ListView(children:s.data!.docs.map((d)=>Card(child:ListTile(title:Text('${d.data()['title']??'Activity'}'),
-    subtitle:Text('${d.data()['description']??''}',maxLines:3),trailing:const Icon(Icons.arrow_forward_ios,size:16),
-    onTap:()=>showDialog<void>(context:context,builder:(_)=>AlertDialog(title:Text('${d.data()['title']??'Activity'}'),content:SingleChildScrollView(child:SelectableText('${d.data()['content']??d.data()['description']??''}')),actions:[if(d.data()['url'] is String) TextButton(onPressed:()=>openApprovedLearningLink(d.data()['url'] as String),child:const Text('Open activity')),TextButton(onPressed:()=>Navigator.pop(context),child:const Text('Close'))])))).toList());}
- )));
+ @override
+ Widget build(BuildContext context) {
+  return Scaffold(
+   appBar: AppBar(title: Text(title)),
+   body: StreamBuilder<QuerySnapshot<Map<String,dynamic>>>(
+    stream: FirebaseFirestore.instance.collection(collection).where('published',isEqualTo:true).limit(30).snapshots(),
+    builder: (context,snapshot) {
+     if(snapshot.hasError) return const Center(child:Text('Content unavailable.'));
+     if(!snapshot.hasData) return const Center(child:CircularProgressIndicator());
+     final docs=snapshot.data!.docs;
+     if(docs.isEmpty) return const Center(child:Text('Approved learning activities will appear here.'));
+     return ListView.builder(
+      itemCount:docs.length,
+      itemBuilder:(context,index) {
+       final data=docs[index].data();
+       return Card(child:ListTile(
+        title:Text('${data['title']??'Activity'}'),
+        subtitle:Text('${data['description']??''}',maxLines:3),
+        onTap:()=>showDialog<void>(
+         context:context,
+         builder:(dialogContext)=>AlertDialog(
+          title:Text('${data['title']??'Activity'}'),
+          content:SingleChildScrollView(child:SelectableText('${data['content']??data['description']??''}')),
+          actions:[
+           if(data['url'] is String) TextButton(onPressed:()=>openApprovedLearningLink(data['url'] as String),child:const Text('Open activity')),
+           TextButton(onPressed:()=>Navigator.pop(dialogContext),child:const Text('Close')),
+          ],
+         ),
+        ),
+       ));
+      },
+     );
+    },
+   ),
+  );
+ }
 }
 class ActivityCompletionButton extends StatefulWidget{
  final String questId;
