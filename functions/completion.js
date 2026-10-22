@@ -3,14 +3,14 @@ const admin=require('firebase-admin');
 if(!admin.apps.length)admin.initializeApp();
 const db=admin.firestore();
 const valid=x=>typeof x==='string'&&/^[a-zA-Z0-9_-]{1,100}$/.test(x);
-const staff=r=>{if(!r.auth||!['admin','instructor'].includes(r.auth.token.role))throw new HttpsError('permission-denied','Staff role required');};
+const {requireCurrentRole}=require('./authorization');
 exports.finalizeCourseCompletion=onCall(async r=>{
- staff(r);
+ const {role}=await requireCurrentRole(r,['admin','instructor']);
  const {uid,courseId}=r.data||{};
  if(!valid(uid)||!valid(courseId))throw new HttpsError('invalid-argument','Bad learner or course');
  const course=await db.doc('courses/'+courseId).get();
  if(!course.exists)throw new HttpsError('not-found','Course missing');
- if(r.auth.token.role!=='admin'&&course.data().createdBy!==r.auth.uid)throw new HttpsError('permission-denied','Not course instructor');
+ if(role!=='admin'&&course.data().createdBy!==r.auth.uid)throw new HttpsError('permission-denied','Not course instructor');
  const enrollment=db.doc('users/'+uid+'/enrollments/'+courseId);
  const enrolled=await enrollment.get();
  if(!enrolled.exists)throw new HttpsError('not-found','Enrollment missing');
