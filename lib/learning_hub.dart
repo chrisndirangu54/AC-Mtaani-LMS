@@ -3,6 +3,7 @@ import 'staff_console.dart';
 import 'offline_learning.dart';
 import 'advanced_studio.dart';
 import 'operations_console.dart';
+import 'immersive_lesson.dart';
 import 'learning_model_viewer.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -79,6 +80,7 @@ class HubCollectionScreen extends StatelessWidget {
           content:SingleChildScrollView(child:SelectableText('${data['content']??data['description']??''}')),
           actions:[
            if(collection=='experiences' && data['modelUrl'] is String) TextButton(onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>LearningModelViewer(modelUrl:data['modelUrl'] as String,title:'${data['title']??'3D lesson'}',description:'${data['description']??''}'))),child:const Text('Explore in 3D')),
+           if(collection=='experiences' && data['modelUrl'] is String) TextButton(onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>ImmersiveLesson(title:'${data['title']??'3D Lesson'}',modelUrl:data['modelUrl'] as String,description:data['description'] as String?))),child:const Text('View 3D model')),
            if(data['url'] is String) TextButton(onPressed:()=>openApprovedLearningLink(data['url'] as String),child:const Text('Open activity')),
            TextButton(onPressed:()=>Navigator.pop(dialogContext),child:const Text('Close')),
           ],
