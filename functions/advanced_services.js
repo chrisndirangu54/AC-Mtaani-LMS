@@ -4,6 +4,7 @@ const {onCall,HttpsError}=require('firebase-functions/v2/https');
 const {defineSecret}=require('firebase-functions/params');
 const admin=require('firebase-admin');
 const crypto=require('node:crypto');
+const {PDFDocument,StandardFonts,rgb}=require('pdf-lib');
 if(!admin.apps.length)admin.initializeApp();
 const db=admin.firestore();
 const signingKey=defineSecret('CERTIFICATE_SIGNING_KEY');
@@ -26,7 +27,19 @@ exports.requestCertificate=onCall({secrets:[signingKey]},async r=>{
  const payload={certificateId,uid,courseId,courseTitle:String(course.data().title||''),issuedAt:new Date().toISOString(),schema:1};
  const proof=crypto.createHmac('sha256',signingKey.value()).update(JSON.stringify(payload)).digest('hex');
  await db.doc('certificates/'+certificateId).set({...payload,proof,revoked:false,requiredLessonCount:required.size},{merge:false});
- return {certificateId,verificationPath:'/verify/'+certificateId};
+ const pdf=await PDFDocument.create();
+ const page=pdf.addPage([842,595]);
+ const bold=await pdf.embedFont(StandardFonts.HelveticaBold);
+ const normal=await pdf.embedFont(StandardFonts.Helvetica);
+ page.drawRectangle({x:0,y:0,width:842,height:595,color:rgb(0.035,0.192,0.38)});
+ page.drawRectangle({x:30,y:30,width:782,height:535,borderColor:rgb(0.97,0.51,0.13),borderWidth:5});
+ page.drawText('AMERICAN CORNER MTAANI',{x:185,y:480,size:28,font:bold,color:rgb(1,1,1)});
+ page.drawText('CERTIFICATE OF COMPLETION',{x:170,y:390,size:30,font:bold,color:rgb(1,1,1)});
+ page.drawText('Course: '+payload.courseTitle.slice(0,65),{x:125,y:315,size:17,font:normal,color:rgb(1,1,1)});
+ page.drawText('Issued: '+payload.issuedAt.slice(0,10),{x:125,y:265,size:16,font:normal,color:rgb(1,1,1)});
+ page.drawText('Verification ID: '+certificateId,{x:125,y:170,size:12,font:normal,color:rgb(1,1,1)});
+ page.drawText('Verify via the LMS; this is not an Embassy-accredited qualification.',{x:125,y:120,size:11,font:normal,color:rgb(1,1,1)});
+ return {certificateId,pdfBase64:Buffer.from(await pdf.save()).toString('base64'),verificationPath:'/verify/'+certificateId};
 });
 exports.verifyCertificate=onCall(async r=>{
  const certId=r.data?.certificateId;
