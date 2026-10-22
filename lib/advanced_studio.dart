@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:printing/printing.dart';
+import 'dart:typed_data';
 
 class AdvancedLearningStudio extends StatefulWidget {
  const AdvancedLearningStudio({super.key});
@@ -15,7 +17,8 @@ class _AdvancedLearningStudioState extends State<AdvancedLearningStudio>{
  Future<void> call(String fn,Map<String,dynamic> data)async{
   setState(()=>busy=true);
   try{final res=await FirebaseFunctions.instance.httpsCallable(fn).call(data);
-   if(mounted)setState(()=>status=const JsonEncoder.withIndent('  ').convert(res.data));
+   if(fn=='requestCertificate' && res.data is Map && res.data['pdfBase64'] is String){ final bytes=Uint8List.fromList(base64Decode(res.data['pdfBase64'] as String)); await Printing.sharePdf(bytes:bytes,filename:'AC_Mtaani_certificate.pdf'); }
+   if(mounted)setState(()=>status=const JsonEncoder.withIndent('  ').convert(res.data is Map?Map.from(res.data)..remove('pdfBase64'):res.data));
   }catch(e){if(mounted)setState(()=>status='Unable to complete operation: $e');}
   finally{if(mounted)setState(()=>busy=false);}
  }
