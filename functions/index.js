@@ -57,3 +57,5 @@ exports.aiTutor=onCall({secrets:[secret],timeoutSeconds:60},async req=>{
 Object.assign(exports,require('./learning_features'));
 
 Object.assign(exports,require('./advanced_services'));
+
+Object.assign(exports,require('./operations'));
