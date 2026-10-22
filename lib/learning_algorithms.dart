@@ -13,7 +13,7 @@ class ReviewState {
   final passed=quality>=3;
   final reps=passed?repetitions+1:0;
   final interval=passed?(reps==1?1:reps==2?6:(intervalDays*nextEase).round().clamp(1,3650)):1;
-  return ReviewState(repetitions:reps,ease:nextEase,intervalDays:interval,due:DateTime(now.year,now.month,now.day).add(Duration(days:interval)));
+  return ReviewState(repetitions:reps,ease:nextEase,intervalDays:interval,due:(now.isUtc ? DateTime.utc(now.year,now.month,now.day) : DateTime(now.year,now.month,now.day)).add(Duration(days:interval)));
  }
  Map<String,dynamic> toJson()=>{'repetitions':repetitions,'ease':ease,'intervalDays':intervalDays,'due':due.toIso8601String()};
  factory ReviewState.fromJson(Map<String,dynamic> json)=>ReviewState(repetitions:(json['repetitions'] as num?)?.toInt()??0,ease:(json['ease'] as num?)?.toDouble()??2.5,intervalDays:(json['intervalDays'] as num?)?.toInt()??0,due:DateTime.tryParse('${json['due']}')??DateTime.now());
