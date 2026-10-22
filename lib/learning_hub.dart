@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'staff_console.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -21,7 +22,7 @@ const modules=<({String name,String subtitle,IconData icon,String collection})>[
 class LearningHub extends StatelessWidget {
  const LearningHub({super.key});
  @override Widget build(BuildContext context)=>Scaffold(
- appBar:AppBar(title:const Text('Mtaani Learning Hub'),backgroundColor:_navy,foregroundColor:Colors.white),
+ appBar:AppBar(title:const Text('Mtaani Learning Hub'),backgroundColor:_navy,foregroundColor:Colors.white,actions:[IconButton(tooltip:'Staff studio',icon:const Icon(Icons.admin_panel_settings),onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>const StaffConsole()))) ]),
  body:ListView(padding:const EdgeInsets.all(16),children:[
   Container(padding:const EdgeInsets.all(20),decoration:BoxDecoration(color:_navy,borderRadius:BorderRadius.circular(20)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
    Text('LEARN • CREATE • CONNECT',style:TextStyle(color:_orange,fontWeight:FontWeight.bold)),
