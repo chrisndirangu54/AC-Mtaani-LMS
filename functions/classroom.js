@@ -1,0 +1,27 @@
+const {onCall,HttpsError}=require('firebase-functions/v2/https');
+const {defineSecret,defineString}=require('firebase-functions/params');
+const admin=require('firebase-admin');
+const {AccessToken}=require('livekit-server-sdk');
+if(!admin.apps.length)admin.initializeApp();
+const db=admin.firestore();
+const key=defineSecret('LIVEKIT_API_KEY');
+const secret=defineSecret('LIVEKIT_API_SECRET');
+const publicUrl=defineString('LIVEKIT_WS_URL',{default:''});
+exports.classroomJoinToken=onCall({secrets:[key,secret]},async request=>{
+ if(!request.auth)throw new HttpsError('unauthenticated','Sign in to join a classroom');
+ const uid=request.auth.uid;
+ const sessionId=String(request.data?.sessionId||'');
+ if(!/^[a-zA-Z0-9_-]{1,100}$/.test(sessionId))throw new HttpsError('invalid-argument','Invalid session');
+ const snap=await db.doc('sessions/'+sessionId).get();
+ if(!snap.exists||!snap.data().published)throw new HttpsError('not-found','Classroom unavailable');
+ const session=snap.data();
+ if(!session.courseId)throw new HttpsError('failed-precondition','Session is not bound to a course');
+ const enrollment=await db.doc('users/'+uid+'/enrollments/'+session.courseId).get();
+ const staff=['admin','instructor'].includes(request.auth.token.role);
+ if(!enrollment.exists&&!staff)throw new HttpsError('permission-denied','Enroll in the free course before joining');
+ if(!publicUrl.value().startsWith('wss://'))throw new HttpsError('failed-precondition','Classroom server not configured');
+ const room='acm_'+sessionId;
+ const token=new AccessToken(key.value(),secret.value(),{identity:uid,ttl:'20m',name:request.auth.token.name||'Learner'});
+ token.addGrant({roomJoin:true,room,canPublish:true,canSubscribe:true,canPublishData:true,roomAdmin:staff});
+ return {url:publicUrl.value(),token:await token.toJwt(),room};
+});
