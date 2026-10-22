@@ -1,0 +1,28 @@
+const {onCall,HttpsError}=require('firebase-functions/v2/https');
+const admin=require('firebase-admin');if(!admin.apps.length)admin.initializeApp();const db=admin.firestore();
+const valid=x=>typeof x==='string'&&/^[a-zA-Z0-9_-]{1,100}$/.test(x);
+exports.recordLearningEvent=onCall(async r=>{
+ if(!r.auth)throw new HttpsError('unauthenticated','Sign in first');
+ const uid=r.auth.uid,courseId=r.data?.courseId,event=r.data?.event,operationId=r.data?.operationId;
+ if(!valid(courseId)||!valid(operationId)||!['lesson_opened','lesson_completed','quiz_submitted','course_completed'].includes(event))throw new HttpsError('invalid-argument','Invalid event');
+ if(!(await db.doc('users/'+uid+'/enrollments/'+courseId).get()).exists)throw new HttpsError('permission-denied','Course enrollment required');
+ const d=new Date().toISOString().slice(0,10);
+ const dedupe=db.doc('users/'+uid+'/analyticsDedupe/'+operationId);
+ const count=db.doc('analyticsDaily/'+courseId+'_'+d);
+ await db.runTransaction(async tx=>{
+  const previous=await tx.get(dedupe);
+  if(previous.exists)return;
+  tx.create(dedupe,{event,courseId,date:d});
+  tx.set(count,{courseId,date:d,[event]:admin.firestore.FieldValue.increment(1)}, {merge:true});
+ });
+ return {accepted:true};
+});
+exports.courseAnalyticsDaily=onCall(async r=>{
+ if(!r.auth||!['admin','instructor'].includes(r.auth.token.role))throw new HttpsError('permission-denied','Staff only');
+ const courseId=r.data?.courseId;if(!valid(courseId))throw new HttpsError('invalid-argument','Course ID required');
+ const course=await db.doc('courses/'+courseId).get();
+ if(!course.exists)throw new HttpsError('not-found','Course missing');
+ if(r.auth.token.role!=='admin'&&course.data().createdBy!==r.auth.uid)throw new HttpsError('permission-denied','Course owner only');
+ const rows=await db.collection('analyticsDaily').where('courseId','==',courseId).limit(90).get();
+ return {courseId,days:rows.docs.map(d=>({date:d.data().date,lessonOpened:d.data().lesson_opened||0,lessonCompleted:d.data().lesson_completed||0,quizSubmitted:d.data().quiz_submitted||0,courseCompleted:d.data().course_completed||0})).sort((a,b)=>a.date.localeCompare(b.date))};
+});
