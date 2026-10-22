@@ -59,7 +59,7 @@ class HubCollectionScreen extends StatelessWidget{
    if(s.data!.docs.isEmpty)return const Center(child:Text('New free activities will appear here after instructor approval.'));
    return ListView(children:s.data!.docs.map((d)=>Card(child:ListTile(title:Text('${d.data()['title']??'Activity'}'),
     subtitle:Text('${d.data()['description']??''}',maxLines:3),trailing:const Icon(Icons.arrow_forward_ios,size:16),
-    onTap:()=>showDialog<void>(context:context,builder:(_)=>AlertDialog(title:Text('${d.data()['title']??'Activity'}'),content:SingleChildScrollView(child:SelectableText('${d.data()['content']??d.data()['description']??''}')),actions:[if(d.data()['url'] is String) TextButton(onPressed:()=>openApprovedLearningLink(d.data()['url'] as String),child:const Text('Open activity')),TextButton(onPressed:()=>Navigator.pop(context),child:const Text('Close'))]))))).toList());}
+    onTap:()=>showDialog<void>(context:context,builder:(_)=>AlertDialog(title:Text('${d.data()['title']??'Activity'}'),content:SingleChildScrollView(child:SelectableText('${d.data()['content']??d.data()['description']??''}')),actions:[if(d.data()['url'] is String) TextButton(onPressed:()=>openApprovedLearningLink(d.data()['url'] as String),child:const Text('Open activity')),TextButton(onPressed:()=>Navigator.pop(context),child:const Text('Close'))])))).toList());}
  )));
 }
 class ActivityCompletionButton extends StatefulWidget{
