@@ -18,7 +18,8 @@ class _AdvancedLearningStudioState extends State<AdvancedLearningStudio>{
   setState(()=>busy=true);
   try{final res=await FirebaseFunctions.instance.httpsCallable(fn).call(data);
    if(fn=='requestCertificate' && res.data is Map && res.data['pdfBase64'] is String){ final bytes=Uint8List.fromList(base64Decode(res.data['pdfBase64'] as String)); await Printing.sharePdf(bytes:bytes,filename:'AC_Mtaani_certificate.pdf'); }
-   if(mounted)setState(()=>status=const JsonEncoder.withIndent('  ').convert(res.data is Map?Map.from(res.data)..remove('pdfBase64'):res.data));
+   final display = res.data is Map ? (Map<String,dynamic>.from(res.data as Map)..remove('pdfBase64')) : res.data;
+   if(mounted)setState(()=>status=const JsonEncoder.withIndent('  ').convert(display));
   }catch(e){if(mounted)setState(()=>status='Unable to complete operation: $e');}
   finally{if(mounted)setState(()=>busy=false);}
  }
