@@ -35,6 +35,8 @@ service cloud.firestore {
      allow read: if collection in ['quests','practice','labs','portfolios','communities','careers','resources','challenges','equipment','experiences','opportunities','sessions'] && (resource.data.published == true || staff());
      allow write: if false;
    }
+   match /analyticsDaily/{id} {allow read, write: if false;}
+   match /users/{uid}/analyticsDedupe/{id} {allow read, write: if false;}
    match /labUsage/{id} { allow read, write: if false; }
    match /labJobs/{id} { allow read, write: if false; }
    match /auditEvents/{id} { allow read, write: if false; }
