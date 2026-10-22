@@ -22,6 +22,19 @@ service cloud.firestore {
        allow write: if false;
      }
    }
+   match /learningProfiles/{uid} {
+     allow read: if signedIn() && (request.auth.uid == uid || admin());
+     allow write: if false;
+     match /completions/{id} {allow read: if signedIn() && (request.auth.uid == uid || admin());allow write: if false;}
+   }
+   match /submissions/{id} {
+     allow read: if signedIn() && (resource.data.uid == request.auth.uid || staff());
+     allow write: if false;
+   }
+   match /{collection}/{id} {
+     allow read: if collection in ['quests','practice','labs','portfolios','communities','careers','resources','challenges','equipment','experiences','opportunities','sessions'] && (resource.data.published == true || staff());
+     allow write: if false;
+   }
    match /certificates/{id} { allow read, write: if false; }
    match /aiUsage/{id} { allow read, write: if false; }
    match /{document=**} { allow read, write: if false; }
