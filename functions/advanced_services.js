@@ -4,6 +4,7 @@ const {onCall,HttpsError}=require('firebase-functions/v2/https');
 const {defineSecret}=require('firebase-functions/params');
 const admin=require('firebase-admin');
 const crypto=require('node:crypto');
+const {requireCurrentRole}=require('./authorization');
 const {PDFDocument,StandardFonts,rgb}=require('pdf-lib');
 if(!admin.apps.length)admin.initializeApp();
 const db=admin.firestore();
@@ -54,14 +55,14 @@ exports.verifyCertificate=onCall({secrets:[signingKey]},async r=>{
  return {valid:true,certificateId:certId,courseTitle:d.courseTitle,issuedAt:d.issuedAt};
 });
 exports.getDashboardMetrics=onCall(async r=>{
- requireAdmin(r);
+ await requireCurrentRole(r,['admin'],{requireRecentLogin:true});
  const names=['courses','certificates','submissions','sessions','quests'];
  const out={};
  for(const name of names){const snap=await db.collection(name).count().get();out[name]=snap.data().count;}
  return {counts:out,generatedAt:new Date().toISOString(),note:'Aggregate totals; not unique active learners or outcomes'};
 });
 exports.createLiveSession=onCall(async r=>{
- requireStaff(r);
+ await requireCurrentRole(r,['admin','instructor']);
  const {courseId,title,url,scheduledAt}=r.data||{};
  if(!id(courseId)||typeof title!=='string'||title.length<3||typeof url!=='string')throw new HttpsError('invalid-argument','Invalid session');
  const link=new URL(url);
