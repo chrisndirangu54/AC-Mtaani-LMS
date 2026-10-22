@@ -55,3 +55,5 @@ exports.aiTutor=onCall({secrets:[secret],timeoutSeconds:60},async req=>{
 
 // Community learning, evidence review, and verified XP functions
 Object.assign(exports,require('./learning_features'));
+
+Object.assign(exports,require('./advanced_services'));
