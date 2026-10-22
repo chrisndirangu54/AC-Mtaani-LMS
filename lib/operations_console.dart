@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class OperationsConsole extends StatefulWidget{
  const OperationsConsole({super.key});
