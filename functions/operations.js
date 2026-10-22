@@ -68,6 +68,7 @@ exports.setInstitutionalRole=onCall(async r=>{
  if(!valid(uid)||!['learner','instructor','admin'].includes(role)||uid===r.auth.uid)throw new HttpsError('invalid-argument','Invalid role change');
  const user=await admin.auth().getUser(uid);
  await admin.auth().setCustomUserClaims(uid,{...user.customClaims,role});
+ await admin.auth().revokeRefreshTokens(uid);
  await audit(r.auth.uid,'role_changed',uid,{role});
  return {uid,role,requiresTokenRefresh:true};
 });
