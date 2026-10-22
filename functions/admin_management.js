@@ -16,6 +16,7 @@ exports.adminSetDisabled=onCall(async r=>{
  const uid=r.data?.uid,disabled=r.data?.disabled;
  if(!safe(uid)||typeof disabled!=='boolean'||uid===r.auth.uid)throw new HttpsError('invalid-argument','Invalid account change');
  await admin.auth().updateUser(uid,{disabled});
+ if(disabled)await admin.auth().revokeRefreshTokens(uid);
  await db.collection('auditEvents').add({actor:r.auth.uid,action:disabled?'user_disabled':'user_enabled',target:uid,at:admin.firestore.FieldValue.serverTimestamp()});
  return {uid,disabled};
 });
