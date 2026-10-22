@@ -1,0 +1,11 @@
+.dart_tool/
+build/
+.firebase/
+.env
+.env.*
+!.env.example
+**/node_modules/
+android/local.properties
+ios/Pods/
+firebase-debug.log
+serviceAccountKey.json
