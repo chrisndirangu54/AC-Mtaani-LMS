@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'admin_governance.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -24,7 +25,7 @@ class _StaffConsoleState extends State<StaffConsole> {
  @override Widget build(BuildContext context){
  final u=FirebaseAuth.instance.currentUser;
  if(u==null)return const Scaffold(body:Center(child:Text('Staff sign-in required.')));
- return Scaffold(appBar:AppBar(title:const Text('Instructor & Admin Studio')),body:FutureBuilder<IdTokenResult>(
+ return Scaffold(appBar:AppBar(title:const Text('Instructor & Admin Studio'),actions:[IconButton(tooltip:'Administrator governance',icon:const Icon(Icons.manage_accounts),onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>const AdminGovernanceScreen())))]),body:FutureBuilder<IdTokenResult>(
  future:u.getIdTokenResult(),builder:(context,s){
  final role=s.data?.claims?['role'];
  if(!['admin','instructor'].contains(role))return const Center(child:Text('Staff access requires an administrator-issued role claim.'));
