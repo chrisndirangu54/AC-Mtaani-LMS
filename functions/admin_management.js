@@ -2,14 +2,8 @@ const {onCall,HttpsError}=require('firebase-functions/v2/https');
 const admin=require('firebase-admin');
 if(!admin.apps.length)admin.initializeApp();
 const db=admin.firestore();
-const requireAdmin=async r=>{
- if(!r.auth||r.auth.token.role!=='admin')throw new HttpsError('permission-denied','Admin only');
- const user=await admin.auth().getUser(r.auth.uid);
- if(user.disabled)throw new HttpsError('permission-denied','Account disabled');
- const issuedAt=Number(r.auth.token.iat||0)*1000;
- const validAfter=Date.parse(user.tokensValidAfterTime||'1970-01-01T00:00:00Z');
- if(!Number.isFinite(issuedAt)||issuedAt<validAfter)throw new HttpsError('unauthenticated','Session revoked; sign in again');
-};
+const {requireCurrentRole}=require('./authorization');
+const requireAdmin=r=>requireCurrentRole(r,['admin'],{requireRecentLogin:true});
 const safe=x=>typeof x==='string'&&/^[A-Za-z0-9_-]{1,100}$/.test(x);
 exports.adminListUsers=onCall(async r=>{
  await requireAdmin(r);
