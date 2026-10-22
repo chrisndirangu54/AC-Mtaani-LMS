@@ -16,6 +16,7 @@ dependencies:
   url_launcher: ^6.3.1
   lottie: ^3.3.1
   flutter_svg: ^2.0.17
+  printing: ^5.13.4
 dev_dependencies:
   flutter_test:
     sdk: flutter
