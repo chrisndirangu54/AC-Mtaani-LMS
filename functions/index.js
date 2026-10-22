@@ -52,3 +52,6 @@ exports.aiTutor=onCall({secrets:[secret],timeoutSeconds:60},async req=>{
  if(!resp.ok)throw new HttpsError('unavailable','Tutor service unavailable');
  const data=await resp.json();return {answer:String(data.choices?.[0]?.message?.content||'No answer available')};
 });
+
+// Community learning, evidence review, and verified XP functions
+Object.assign(exports,require('./learning_features'));
