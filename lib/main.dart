@@ -1,3 +1,4 @@
+import 'learning_hub.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -65,7 +66,7 @@ class _CourseHomeState extends State<CourseHome> {
       appBar: AppBar(
         backgroundColor: navy, foregroundColor: Colors.white,
         title: const Text('American Corner Mtaani'),
-        actions: [TextButton(onPressed: user == null ? signIn : () async { await FirebaseAuth.instance.signOut(); setState(() {}); }, child: Text(user == null ? 'Sign in' : 'Sign out', style: const TextStyle(color: Colors.white)))],
+        actions: [IconButton(tooltip: 'Learning Hub', icon: const Icon(Icons.auto_awesome), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LearningHub()))), TextButton(onPressed: user == null ? signIn : () async { await FirebaseAuth.instance.signOut(); setState(() {}); }, child: Text(user == null ? 'Sign in' : 'Sign out', style: const TextStyle(color: Colors.white)))],
       ),
       body: ListView(padding: const EdgeInsets.all(20), children: [
         Container(padding: const EdgeInsets.all(26), decoration: BoxDecoration(color: navy, borderRadius: BorderRadius.circular(18)),
