@@ -1,0 +1,31 @@
+name: Security gates
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Audit backend dependencies
+        working-directory: functions
+        run: |
+          npm install --package-lock-only --ignore-scripts
+          npm audit --omit=dev --audit-level=high
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check high-risk credential patterns
+        shell: bash
+        run: |
+          if git grep -nEI '(-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|AIza[0-9A-Za-z_-]{35}|sk-proj-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{36})' -- . ':!*.md'; then
+            echo 'Possible hardcoded credential found. Rotate it immediately.' >&2
+            exit 1
+          fi
